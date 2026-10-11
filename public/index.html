@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Libro de Gastos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F0ECE1;
+    --surface: #FAF7EF;
+    --ink: #232019;
+    --ink-soft: #5C564A;
+    --green: #2B4636;
+    --rust: #8B3A2B;
+    --rule: #C9C0AC;
+    --rule-soft: #E1DACA;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Lora', serif;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+    line-height: 1.5;
+  }
+
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  header {
+    border-bottom: 2px solid var(--green);
+    padding-bottom: 18px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    font-style: italic;
+    margin: 0;
+    color: var(--green);
+  }
+
+  header span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .entrada {
+    border-bottom: 1px solid var(--rule);
+    padding: 24px 0 28px;
+    margin-bottom: 8px;
+  }
+
+  .entrada p {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 12px;
+  }
+
+  form input:nth-child(4) { grid-column: 1 / -1; }
+
+  input, button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 9px 10px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 2px;
+  }
+
+  input::placeholder { color: var(--ink-soft); }
+
+  input:focus, button:focus-visible {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green);
+  }
+
+  button {
+    background: var(--green);
+    color: var(--surface);
+    border-color: var(--green);
+    cursor: pointer;
+    font-weight: 500;
+    grid-column: 1 / -1;
+  }
+
+  button:hover { background: #23392C; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+
+  thead th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--ink-soft);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  thead th:last-child, thead th:nth-child(4) { text-align: right; }
+
+  tbody td {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 14px;
+    vertical-align: top;
+  }
+
+  tbody td.monto {
+    font-family: 'IBM Plex Mono', monospace;
+    text-align: right;
+    color: var(--rust);
+    white-space: nowrap;
+  }
+
+  tbody td.fecha {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+
+  .acciones { text-align: right; white-space: nowrap; }
+
+  .acciones button {
+    all: unset;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-left: 10px;
+    border-bottom: 1px solid transparent;
+  }
+
+  .acciones button:hover { color: var(--ink); border-bottom-color: var(--ink-soft); }
+
+  #total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 14px;
+    margin-top: 4px;
+    border-top: 2px solid var(--green);
+    font-size: 15px;
+  }
+
+  #total span:first-child { color: var(--ink-soft); }
+  #total span:last-child { font-family: 'IBM Plex Mono', monospace; color: var(--green); font-weight: 500; }
+
+  #resumen { margin-top: 44px; }
+
+  #resumen h2 {
+    font-size: 15px;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--green);
+    margin: 0 0 14px;
+  }
+
+  #resumen ul { list-style: none; padding: 0; margin: 0; }
+
+  #resumen li {
+    display: flex;
+    align-items: baseline;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  #resumen li .cat { white-space: nowrap; }
+
+  #resumen li .puntos {
+    flex: 1;
+    border-bottom: 1px dotted var(--rule);
+    margin: 0 6px 3px;
+  }
+
+  #resumen li .val { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Libro de gastos</h1>
+  <span id="fecha-hoy"></span>
+</header>
+
+<div class="entrada">
+  <p>Nueva entrada</p>
+  <form id="form-gasto">
+    <input type="hidden" id="gasto-id">
+    <input type="number" id="monto" placeholder="Monto" step="0.01" required>
+    <input type="date" id="fecha" required>
+    <input type="text" id="categoria" placeholder="Categoría">
+    <input type="text" id="descripcion" placeholder="Descripción">
+    <button type="submit" id="btn-submit">Agregar</button>
+  </form>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th></th></tr>
+  </thead>
+  <tbody id="lista-gastos"></tbody>
+</table>
+
+<div id="total"><span>Total</span><span id="total-valor">$0.00</span></div>
+
+<div id="resumen">
+  <h2>Por categoría</h2>
+  <ul id="lista-resumen"></ul>
+</div>
+
+<script>
+  const API = 'http://localhost:3000';
+  let gastosCache = [];
+
+  document.getElementById('fecha-hoy').textContent =
+    new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  async function cargarGastos() {
+    const res = await fetch(`${API}/gastos`);
+    gastosCache = await res.json();
+
+    const tbody = document.getElementById('lista-gastos');
+    tbody.innerHTML = '';
+    let total = 0;
+
+    for (const g of gastosCache) {
+      const fila = document.createElement('tr');
+      const fecha = new Date(g.fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+      fila.innerHTML = `
+        <td class="fecha">${fecha}</td>
+        <td>${g.categoria || '—'}</td>
+        <td>${g.descripcion || '—'}</td>
+        <td class="monto">$${parseFloat(g.monto).toFixed(2)}</td>
+        <td class="acciones">
+          <button onclick="editarGasto(${g.id})">editar</button>
+          <button onclick="borrarGasto(${g.id})">borrar</button>
+        </td>
+      `;
+      tbody.appendChild(fila);
+      total += parseFloat(g.monto);
+    }
+
+    document.getElementById('total-valor').textContent = `$${total.toFixed(2)}`;
+    cargarResumen();
+  }
+
+  async function cargarResumen() {
+    const res = await fetch(`${API}/gastos/resumen`);
+    const resumen = await res.json();
+
+    const ul = document.getElementById('lista-resumen');
+    ul.innerHTML = '';
+
+    for (const r of resumen) {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="cat">${r.categoria || 'Sin categoría'}</span>
+        <span class="puntos"></span>
+        <span class="val">$${parseFloat(r.total).toFixed(2)}</span>
+      `;
+      ul.appendChild(li);
+    }
+  }
+
+  function editarGasto(id) {
+    const gasto = gastosCache.find(g => g.id === id);
+    if (!gasto) return;
+
+    document.getElementById('gasto-id').value = gasto.id;
+    document.getElementById('monto').value = gasto.monto;
+    document.getElementById('categoria').value = gasto.categoria || '';
+    document.getElementById('descripcion').value = gasto.descripcion || '';
+    document.getElementById('fecha').value = gasto.fecha.split('T')[0];
+    document.getElementById('btn-submit').textContent = 'Guardar cambios';
+  }
+
+  async function borrarGasto(id) {
+    if (!confirm('¿Borrar este gasto?')) return;
+    await fetch(`${API}/gastos/${id}`, { method: 'DELETE' });
+    cargarGastos();
+  }
+
+  document.getElementById('form-gasto').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('gasto-id').value;
+    const gasto = {
+      monto: document.getElementById('monto').value,
+      categoria: document.getElementById('categoria').value,
+      descripcion: document.getElementById('descripcion').value,
+      fecha: document.getElementById('fecha').value,
+    };
+
+    if (id) {
+      await fetch(`${API}/gastos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gasto),
+      });
+    } else {
+      await fetch(`${API}/gastos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gasto),
+      });
+    }
+
+    e.target.reset();
+    document.getElementById('gasto-id').value = '';
+    document.getElementById('btn-submit').textContent = 'Agregar';
+    cargarGastos();
+  });
+
+  cargarGastos();
+</script>
+</body>
+</html>
